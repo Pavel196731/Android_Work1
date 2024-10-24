@@ -73,6 +73,7 @@ fun getGridColumns(): Int {
         3 // Портретная ориентация
     }
 }
+
 @Composable
 fun GridSquares(squares: List<Int>, columns: Int, paddingBottom: Dp, state: LazyGridState) {
     LazyVerticalGrid(
