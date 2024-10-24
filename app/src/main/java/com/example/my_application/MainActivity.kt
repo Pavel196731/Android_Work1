@@ -74,6 +74,8 @@ fun getGridColumns(): Int {
     }
 }
 
+
+
 @Composable
 fun GridSquares(squares: List<Int>, columns: Int, paddingBottom: Dp, state: LazyGridState) {
     LazyVerticalGrid(
