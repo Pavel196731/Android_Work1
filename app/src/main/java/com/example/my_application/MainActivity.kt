@@ -6,20 +6,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -27,99 +24,101 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MainScreen()
+            MainScreen() // Главный экран
         }
     }
 }
 
+@Preview(showSystemUi = true)
 @Composable
-fun MainScreen(){
-    var kvadrat by rememberSaveable { mutableStateOf(listOf<Int>()) }
-    val scroll = rememberScrollState()
-    val columns = location()
+fun MainScreen() {
+    var squares by rememberSaveable { mutableStateOf(listOf<Int>()) } // Сохранение списка квадратиков
+    val gridState = rememberLazyGridState() // Запоминаем состояние для управления прокруткой
 
+    // Получаем количество колонок через отдельную функцию
+    val columns = getGridColumns()
 
+    // Основной контейнер
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-    ){
-        GridKvadrat(kvadrat = kvadrat,scroll, columns = columns, 80.dp)
-        AddkvadratButton(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // Отображаем сетку квадратов с отступом снизу
+        GridSquares(squares = squares, columns = columns, paddingBottom = 80.dp, state = gridState)
+        // Кнопка для добавления квадратов
+        AddSquareButton(
             onClick = {
-                kvadrat = kvadrat + kvadrat.size
-                LaunchedEffect(kvadrat.size) {
-                    scroll.animateScrollTo(scroll.maxValue)
-                    }
+                squares = squares + (squares.size + 1) // Добавляем новый квадрат
             }
         )
     }
 }
-@Composable
-fun location():Int{
-    val c = LocalConfiguration.current
-    return if( c.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT ){
-        3
-    } else {
-        4
-    }
 
+// Вынесенная функция для определения количества колонок в зависимости от ориентации
+@Composable
+fun getGridColumns(): Int {
+    val configuration = LocalConfiguration.current
+    return if (configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+        4 // Ландшафтная ориентация
+    } else {
+        3 // Портретная ориентация
+    }
 }
 
 @Composable
-fun GridKvadrat(kvadrat: List<Int>,scroll:androidx.compose.foundation.ScrollState, columns: Int, paddingButton: Dp) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = paddingButton)
-            .verticalScroll(scroll)
+fun GridSquares(squares: List<Int>, columns: Int, paddingBottom: Dp, state: LazyGridState) {
+    LazyVerticalGrid(
+        state = state, // Передаем состояние для управления скроллом
+        columns = GridCells.Fixed(columns), // Устанавливаем количество колонок
+        modifier = Modifier.run {
+            fillMaxSize()
+                .padding(bottom = paddingBottom)
+        }, // Добавляем отступ снизу
+        contentPadding = PaddingValues(16.dp)
     ) {
-        kvadrat.forEach{ index ->
+        // Отображаем каждый квадрат
+        items(squares.size) { index ->
             GridItem(index = index)
         }
     }
 }
 
 @Composable
-fun GridItem(index: Int){
-    val color = if (index % 2 == 1){
-        Color.Red
-    }
-    else Color.Blue
+fun GridItem(index: Int) {
+    // Условие для смены цвета: чётные (красные), нечётные (синие)
+    val color = if (index % 2 == 0) Color.Red else Color.Blue
+
     Box(
         modifier = Modifier
-            .aspectRatio(1f)
             .padding(4.dp) // Отступ между квадратами
-            .background(color),
+            .aspectRatio(1f) // Пропорция 1:1 для квадратов
+            .background(color), // Устанавливаем цвет в зависимости от индекса
         contentAlignment = Alignment.Center
     ) {
         // Текст внутри квадрата
-        Text(
-            text = "${index + 1}",
-            color = Color.White
-        )
+        Text(text = "${index + 1}", color = Color.White)
     }
 }
 
 @Composable
-fun AddkvadratButton(onClick: @Composable () -> Unit) {
+fun AddSquareButton(onClick: () -> Unit) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         Button(
             onClick = onClick,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .padding(16.dp) // Кнопка будет внизу справа
         ) {
             Text("Click Me")
         }
