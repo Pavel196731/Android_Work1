@@ -63,6 +63,7 @@ fun MainScreen(){
         )
     }
 }
+
 @Composable
 fun location():Int{
     val c = LocalConfiguration.current
