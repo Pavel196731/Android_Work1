@@ -97,6 +97,7 @@ fun GridItem(index: Int) {
     // Условие для смены цвета: чётные (красные), нечётные (синие)
     val color = if (index % 2 == 0) Color.Red else Color.Blue
 
+
     Box(
         modifier = Modifier
             .padding(4.dp) // Отступ между квадратами
