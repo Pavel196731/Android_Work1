@@ -5,8 +5,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,39 +38,65 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
 
 
 class MainActivity : ComponentActivity() {
+    private val squaresViewModel: ViewModel1 by viewModels<ViewModel1> ()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        //squaresViewModel.squares = savedInstanceState?.getInt("SQUARE_COUNT")?:0
         setContent {
-            MainScreen()
+            MainScreen(squaresViewModel)
         }
     }
+
 }
 
-@Preview(showSystemUi = true)
 @Composable
-fun MainScreen() {
-    var squaresSize by rememberSaveable { mutableIntStateOf(0) }
+fun MainScreen(savedSquareCount: ViewModel1) {
+    /*var squaresSize by rememberSaveable { mutableIntStateOf(savedSquareCount.squares) }*/
+    var screenColor by remember { mutableStateOf<Int>(0) }
     val scrollState = rememberLazyGridState()
     val columns = getGridColumns()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(20.dp)
+            .padding(horizontal = 8.dp,
+                vertical = 20.dp)
     ) {
-        GridSquares(squares = squaresSize, columns = columns, state = scrollState)
+        if (screenColor != 0){
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(if (screenColor % 2 == 0) Color.Blue else Color.Red)
+                        .clickable {screenColor = 0} // Сброс нажатия по клику
+                )
+
+            }
+        else {
+            GridSquares(
+                squares = savedSquareCount.squares,
+                columns = columns,
+                state = scrollState,
+                Click = {color ->
+                    if (color == Color.Blue) {
+                        screenColor = 2
+                    }
+                    else screenColor = 1
+        }
+            )
+        }
         AddSquareButton(
             onClick = {
-                squaresSize++
+                savedSquareCount.addSquares()
             }
         )
-        if (squaresSize > columns)
-        LaunchedEffect(squaresSize) {
-                scrollState.animateScrollToItem(squaresSize)
+        if (savedSquareCount.squares > columns)
+        LaunchedEffect(savedSquareCount.squares) {
+                scrollState.animateScrollToItem(savedSquareCount.squares)
                      }
             }
 }
@@ -77,7 +108,7 @@ fun getGridColumns(): Int {
 }
 
 @Composable
-fun GridSquares(squares: Int, columns: Int, state: LazyGridState) {
+fun GridSquares(squares: Int, columns: Int, state: LazyGridState,Click: (Color) -> Unit ) {
     LazyVerticalGrid(
         state = state,
         columns = GridCells.Fixed(columns),
@@ -85,19 +116,24 @@ fun GridSquares(squares: Int, columns: Int, state: LazyGridState) {
         modifier = Modifier.padding(bottom = 80.dp)
     ) {
         items(squares, key = { it }) { index ->
-            GridItem(index = index)
+            GridItem(index = index, onClick = Click)
         }
     }
 }
 
+
 @Composable
-fun GridItem(index: Int) {
+fun GridItem(index: Int, onClick: (Color) -> Unit) {
+    var color = if (index % 2 == 0) Color.Blue else Color.Red
     Box(
         modifier = Modifier
             .padding(4.dp)
             .fillMaxSize()
             .aspectRatio(1f)
-            .background(if (index % 2 == 0) Color.Blue else Color.Red),
+            .background(color)
+            .clickable {
+                    onClick(color)
+                },
         contentAlignment = Alignment.Center
     ) {
         Text(
